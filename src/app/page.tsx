@@ -28,19 +28,25 @@ const HabitsComponent = () => {
   const [currentDate, setCurrentDate] = useState(new Date().toISOString().split("T")[0]);
 
   useEffect(() => {
-    const savedHabits = localStorage.getItem("habits");
-    const savedHabitsByDate = localStorage.getItem("habitsByDate");
+    if (typeof window !== "undefined") {
+      const savedHabits = localStorage.getItem("habits");
+      const savedHabitsByDate = localStorage.getItem("habitsByDate");
 
-    if (savedHabits) setHabits(JSON.parse(savedHabits));
-    if (savedHabitsByDate) setHabitsByDate(JSON.parse(savedHabitsByDate));
+      if (savedHabits) setHabits(JSON.parse(savedHabits));
+      if (savedHabitsByDate) setHabitsByDate(JSON.parse(savedHabitsByDate));
+    }
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("habits", JSON.stringify(habits));
+    if (typeof window !== "undefined") {
+      localStorage.setItem("habits", JSON.stringify(habits));
+    }
   }, [habits]);
 
   useEffect(() => {
-    localStorage.setItem("habitsByDate", JSON.stringify(habitsByDate));
+    if (typeof window !== "undefined") {
+      localStorage.setItem("habitsByDate", JSON.stringify(habitsByDate));
+    }
   }, [habitsByDate]);
 
   const addHabit = () => {
@@ -183,8 +189,10 @@ const GoalsComponent = () => {
   const [newGoal, setNewGoal] = useState("");
 
   useEffect(() => {
-    const storedGoals = JSON.parse(localStorage.getItem("goals") || "[]");
-    setGoals(storedGoals);
+    if (typeof window !== "undefined") {
+      const storedGoals = JSON.parse(localStorage.getItem("goals") || "[]");
+      setGoals(storedGoals);
+    }
   }, []);
 
   const addGoal = () => {
@@ -243,8 +251,10 @@ const TasksComponent = () => {
   const [newTask, setNewTask] = useState("");
 
   useEffect(() => {
-    const storedTasks = JSON.parse(localStorage.getItem("tasks") || "[]");
-    setTasks(storedTasks);
+    if (typeof window !== "undefined") {
+      const storedTasks = JSON.parse(localStorage.getItem("tasks") || "[]");
+      setTasks(storedTasks);
+    }
   }, []);
 
   const addTask = () => {
@@ -321,7 +331,9 @@ const NotesComponent = () => {
   });
 
   useEffect(() => {
-    localStorage.setItem("notes", JSON.stringify(notes));
+    if (typeof window !== "undefined") {
+      localStorage.setItem("notes", JSON.stringify(notes));
+    }
   }, [notes]);
 
   const addNote = () => setNotes([...notes, ""]);
