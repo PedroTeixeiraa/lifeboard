@@ -51,24 +51,6 @@ const HabitsComponent = () => {
     setNewHabit("");
   };
 
-  const addHabitForDate = (habitId: string, habitName: string) => {
-    setHabitsByDate((prev) => {
-      const habitsForToday = prev[currentDate] || [];
-      const existingHabitIndex = habitsForToday.findIndex((habit) => habit.id === habitId);
-
-      let updatedHabits;
-      if (existingHabitIndex !== -1) {
-        updatedHabits = habitsForToday.map((habit, index) =>
-          index === existingHabitIndex ? { ...habit, count: habit.count + 1 } : habit
-        );
-      } else {
-        updatedHabits = [...habitsForToday, { id: habitId, name: habitName, count: 1 }];
-      }
-
-      return { ...prev, [currentDate]: updatedHabits };
-    });
-  };
-
   const changeDate = (days: number) => {
     setCurrentDate((prevDate) => {
       const newDate = new Date(prevDate);
@@ -76,6 +58,41 @@ const HabitsComponent = () => {
       return newDate.toISOString().split("T")[0];
     });
   };
+
+  const toggleHabitForDate = (habitId: string, habitName: string) => {
+    setHabitsByDate((prev) => {
+      const habitsForToday = prev[currentDate] || [];
+      const existingHabitIndex = habitsForToday.findIndex((habit) => habit.id === habitId);
+  
+      let updatedHabits;
+      if (existingHabitIndex !== -1) {
+        const existingHabit = habitsForToday[existingHabitIndex];
+        if (existingHabit.count > 1) {
+          updatedHabits = habitsForToday.map((habit, index) =>
+            index === existingHabitIndex ? { ...habit, count: habit.count - 1 } : habit
+          );
+        } else {
+          updatedHabits = habitsForToday.filter((_, i) => i !== existingHabitIndex);
+        }
+      } else {
+        updatedHabits = [...habitsForToday, { id: habitId, name: habitName, count: 1 }];
+      }
+  
+      return { ...prev, [currentDate]: updatedHabits };
+    });
+  };
+  
+  const removeHabit = (habitId: string) => {
+    setHabits((prev) => prev.filter((habit) => habit.id !== habitId));
+    
+    setHabitsByDate((prev) => {
+      const updatedHabitsByDate = { ...prev };
+      Object.keys(updatedHabitsByDate).forEach((date) => {
+        updatedHabitsByDate[date] = updatedHabitsByDate[date].filter((habit) => habit.id !== habitId);
+      });
+      return updatedHabitsByDate;
+    });
+  }
 
   const chartData = habits.map((habit) => {
     const totalExecutions = Object.values(habitsByDate).reduce((sum, dailyHabits) => {
@@ -90,59 +107,68 @@ const HabitsComponent = () => {
   });
 
   return (
-    <div className="p-4 bg-white shadow-lg rounded-lg flex flex-col gap-4">
+    <div className="p-4 bg-white shadow-lg rounded-lg flex flex-col gap-4"> 
       <h2 className="text-2xl font-semibold mb-4">Habits</h2>
       <div className="w-full max-w-2xl space-y-4">
-        <div className="bg-gray-800 rounded-2xl shadow-lg p-4 flex items-center justify-between">
+        <div className="bg-gray-800 rounded-2xl shadow-lg p-4 flex items-center justify-between text-white">
           <button onClick={() => changeDate(-1)} className="text-blue-500">◀</button>
-          <span>{currentDate}</span>
+          <span>{new Intl.DateTimeFormat("pt-BR").format(new Date(currentDate))}</span>
+
           <button onClick={() => changeDate(1)} className="text-blue-500">▶</button>
         </div>
 
-        <div className="bg-gray-800 rounded-2xl shadow-lg p-4 flex items-start">
+        <div className="bg-gray-800 rounded-2xl shadow-lg p-4 flex items-start gap-2">
           <input
-            className="w-full bg-gray-700 text-white p-2 rounded-lg focus:ring-2 focus:ring-blue-500 mb-2"
+            className="flex-1 bg-gray-700 text-white p-2 rounded-lg focus:ring-2 focus:ring-blue-500"
             value={newHabit}
             onChange={(e) => setNewHabit(e.target.value)}
             placeholder="New Habit"
           />
           <button
             onClick={addHabit}
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-lg p-2 flex items-center justify-center gap-2"
+            className="w-24 bg-blue-500 hover:bg-blue-600 text-white rounded-lg p-2 flex items-center justify-center gap-2"
           >
-            ➕ Add Habit
+            ➕ Add
           </button>
         </div>
 
-        <div className="bg-gray-800 rounded-2xl shadow-lg p-4">
+        {habits.length > 0 && (
+          <div className="bg-gray-800 rounded-2xl shadow-lg p-4">
           {habits.map((habit) => {
             const isChecked = habitsByDate[currentDate]?.some((h) => h.id === habit.id && h.count > 0) || false;
 
             return (
-              <div key={habit.id} className="flex items-center gap-2 py-2">
+              <div key={habit.id} className="flex items-center gap-2 py-2 text-white">
                 <input
                   type="checkbox"
                   checked={isChecked}
-                  onChange={() => addHabitForDate(habit.id, habit.name)}
+                  onChange={() => toggleHabitForDate(habit.id, habit.name)}
                   className="form-checkbox"
                 />
                 <span>{habit.name}</span>
+                <button
+                  className="ml-auto text-red-400 hover:text-red-500"
+                  onClick={() => removeHabit(habit.id)}
+                >
+                  🗑️
+                </button>
               </div>
             );
           })}
         </div>
+        )}
 
         {chartData.length > 0 && (
           <div className="mt-6">
             <h3 className="text-lg font-semibold mb-2">Total Executions per Habit</h3>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid strokeDasharray="2 2" />
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="total" fill="#8884d8" />
+                <Bar dataKey="total" fill="#3B82F6" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -179,18 +205,18 @@ const GoalsComponent = () => {
     <div className="p-4 bg-white shadow-lg rounded-lg flex flex-col gap-4">
       <h2 className="text-2xl font-semibold mb-4">Goals</h2>
       <div className="w-full max-w-2xl space-y-4">
-        <div className="bg-gray-800 rounded-2xl shadow-lg p-4 flex items-start">
+        <div className="bg-gray-800 rounded-2xl shadow-lg p-4 flex items-start gap-2">
           <input
-            className="w-full bg-gray-700 text-white p-2 rounded-lg focus:ring-2 focus:ring-blue-500 mb-2"
+            className="flex-1 bg-gray-700 text-white p-2 rounded-lg focus:ring-2 focus:ring-blue-500"
             value={newGoal}
             onChange={(e) => setNewGoal(e.target.value)}
-            placeholder="New goal"
+            placeholder="New Goal"
           />
           <button
             onClick={addGoal}
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-lg p-2 flex items-center justify-center gap-2"
+            className="w-24 bg-blue-500 hover:bg-blue-600 text-white rounded-lg p-2 flex items-center justify-center gap-2"
           >
-            ➕ Add Goal
+            ➕ Add
           </button>
         </div>
 
@@ -202,7 +228,7 @@ const GoalsComponent = () => {
                 onClick={() => removeGoal(goal.id)}
                 className="text-red-500 hover:text-red-700"
               >
-                X
+                🗑️
               </button>
             </div>
           ))}
@@ -247,18 +273,18 @@ const TasksComponent = () => {
     <div className="p-4 bg-white shadow-lg rounded-lg flex flex-col gap-4">
       <h2 className="text-2xl font-semibold mb-4">Tasks</h2>
       <div className="w-full max-w-2xl space-y-4">
-        <div className="bg-gray-800 rounded-2xl shadow-lg p-4 flex items-start">
+        <div className="bg-gray-800 rounded-2xl shadow-lg p-4 flex items-start gap-2">
           <input
-            className="w-full bg-gray-700 text-white p-2 rounded-lg focus:ring-2 focus:ring-blue-500 mb-2"
+            className="flex-1 bg-gray-700 text-white p-2 rounded-lg focus:ring-2 focus:ring-blue-500"
             value={newTask}
             onChange={(e) => setNewTask(e.target.value)}
-            placeholder="New task"
+            placeholder="New Task"
           />
           <button
             onClick={addTask}
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-lg p-2 flex items-center justify-center gap-2"
+            className="w-24 bg-blue-500 hover:bg-blue-600 text-white rounded-lg p-2 flex items-center justify-center gap-2"
           >
-            ➕ Add Task
+            ➕ Add
           </button>
         </div>
 
@@ -278,7 +304,7 @@ const TasksComponent = () => {
                 onClick={() => removeTask(task.id)}
                 className="text-red-500 hover:text-red-700"
               >
-                X
+                🗑️
               </button>
             </div>
           ))}
@@ -289,7 +315,14 @@ const TasksComponent = () => {
 };
 
 const NotesComponent = () => {
-  const [notes, setNotes] = useState<string[]>([""]);
+  const [notes, setNotes] = useState<string[]>(() => {
+    const savedNotes = localStorage.getItem("notes");
+    return savedNotes ? JSON.parse(savedNotes) : [""];
+  });
+
+  useEffect(() => {
+    localStorage.setItem("notes", JSON.stringify(notes));
+  }, [notes]);
 
   const addNote = () => setNotes([...notes, ""]);
 
@@ -340,10 +373,6 @@ const NotesComponent = () => {
 export default function Home() {
   return (
     <div className="min-h-screen p-4 bg-gradient-to-r from-indigo-100 to-blue-100 flex flex-col gap-4">
-
-      <div className="flex justify-center items-center mb-6">
-        <img src="/path/to/logo.png" alt="Logo" className="h-12" />
-      </div>
       <h1 className="text-3xl font-bold text-center">Productivity Dashboard</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
