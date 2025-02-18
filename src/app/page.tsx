@@ -1,8 +1,7 @@
-"use client";
+"use client"
 import { useState, useEffect } from "react";
 import { v4 as uuidv4 } from 'uuid';
 import { XAxis, YAxis, Tooltip, CartesianGrid, Legend, ResponsiveContainer, BarChart, Bar } from "recharts";
-
 
 type Habit = {
   id: string;
@@ -31,7 +30,7 @@ const HabitsComponent = () => {
     if (typeof window !== "undefined") {
       const savedHabits = localStorage.getItem("habits");
       const savedHabitsByDate = localStorage.getItem("habitsByDate");
-
+  
       if (savedHabits) setHabits(JSON.parse(savedHabits));
       if (savedHabitsByDate) setHabitsByDate(JSON.parse(savedHabitsByDate));
     }
@@ -325,10 +324,14 @@ const TasksComponent = () => {
 };
 
 const NotesComponent = () => {
-  const [notes, setNotes] = useState<string[]>(() => {
-    const savedNotes = localStorage.getItem("notes");
-    return savedNotes ? JSON.parse(savedNotes) : [""];
-  });
+  const [notes, setNotes] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedNotes = JSON.parse(localStorage.getItem("notes") || "[]");
+      setNotes(savedNotes);
+    }
+  }, []);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
